@@ -7,7 +7,7 @@ Solução
 Entrada: 6 e-mails de teste (reclamação, cancelamento, dúvida, spam, interno e uma tentativa de prompt injection).
 Classificação: o Gemini recebe um prompt estruturado e responde só com `<categoria>NOME</categoria>`.
 Validação da saída: um nó If confere, via regex, se a resposta tem exatamente o formato e uma das 5 categorias válidas.
-Roteamento: resposta válida → `fila\_automatica`; qualquer outra → `revisao\_humana`.
+Roteamento: resposta válida → `fila\\\\\\\_automatica`; qualquer outra → `revisao\\\\\\\_humana`.
 ```
 Manual Trigger → Code (6 e-mails) → Gemini (classifica) → If (valida formato)
                                                             ├─ true  → Fila automática
