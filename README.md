@@ -89,7 +89,7 @@ Gmail Trigger → Code (extrai domínio, mascara CPF/telefone, limpa < >) → Ge
                                                                                     └─ false → Revisão humana ───┴→ Google Sheets (log)
 ```
 
-![Execução da v2](v2/triagem-gmail-v2.gif)
+![Execução da v2](v2/triagem-gmail-v2.gif.gif)
 
 ### Como medi
 1. Escrevi o **gabarito antes de rodar**: 24 e-mails fictícios (T01–T24) com a categoria esperada de cada um.
@@ -124,7 +124,7 @@ Composição: 5 reclamações, 5 cancelamentos, 5 dúvidas, 3 internos e 6 outro
 3. No envio, troque `SEU_ENDERECO_DE_TESTE@gmail.com` pelo e-mail de teste. Na triagem, escolha sua planilha.
 4. Publique a triagem **antes** de rodar o envio (o gatilho só vê e-mails que chegam depois de publicar) e despublique ao terminar.
 
-## Como reproduzir
+## Como reproduzir a v1
 1. Importe `triagem-emails.json` no n8n (Menu ⋯ → Import from file).
 2. Configure a credencial do Google Gemini.
 3. Clique em **Execute workflow**.
