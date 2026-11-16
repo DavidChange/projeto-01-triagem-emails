@@ -72,6 +72,54 @@ O e-mail nº 6 tenta fechar a tag `</email>` e injetar uma ordem falsa. O fluxo 
 - Registrar cada classificação numa planilha para medir acerto ao longo do tempo.
 - Montar um conjunto de teste maior e medir precisão por categoria.
 
+v2 — Gmail real, log em planilha e teste com 24 e-mails
+
+A v1 provou que o fluxo funciona, mas com 6 e-mails fixos e uma execução. Na v2 eu quis chegar mais perto de um cenário real e medir o acerto em vez de só olhar o resultado.
+
+O que mudou
+Gatilho real: o Gmail Trigger lê a caixa de entrada de uma conta de teste (verifica a cada minuto).
+Mascaramento antes da IA: um nó Code troca CPF e telefone por [CPF] e [TELEFONE] antes de enviar o texto ao Gemini, e remove < e > do e-mail para impedir o fechamento da tag </email>.
+Domínio do remetente: extraído e registrado (base para uma futura regra de INTERNO).
+Log em planilha: cada classificação vira uma linha (data, domínio, categoria, destino, assunto).
+Mesmo prompt e mesma validação por regex da v1. Só mudou o entorno.
+Gmail Trigger → Code (extrai domínio, mascara CPF/telefone, limpa < >) → Gemini → If (valida formato)
+                                                                                    ├─ true  → Fila automática ──┐
+                                                                                    └─ false → Revisão humana ───┴→ Google Sheets (log)
+
+Execução da v2
+
+Como medi
+Escrevi o gabarito antes de rodar: 24 e-mails fictícios (T01–T24) com a categoria esperada de cada um.
+Um segundo workflow (envio-24-emails.json) enviou os 24 para a conta de teste. O código [T01]…[T24] no assunto serve de chave para cruzar com o gabarito.
+A planilha compara categoria com esperado (coluna acertou: 1 ou 0) e calcula a taxa de acerto.
+
+Composição: 5 reclamações, 5 cancelamentos, 5 dúvidas, 3 internos e 6 outros. Inclui 3 casos de desempate, 2 e-mails com CPF/telefone falsos, 2 tentativas de prompt injection (uma fechando a tag </email>), elogio mal escrito, spam e e-mail sem conteúdo.
+
+Resultado
+
+24/24 corretos (100%), todos na fila automática. CPF e telefone apareceram mascarados na saída do nó Code, e as duas injeções foram classificadas pelo conteúdo real do pedido.
+
+Limitações (sem maquiagem)
+100% numa amostra pequena não é precisão de produção. O gabarito foi escrito com ajuda de IA e a maioria dos casos é clara.
+Alguns exemplos do prompt se parecem com casos do teste, o que pode favorecer o acerto.
+Uma única execução. Não medi variação entre rodadas.
+Todos os remetentes são gmail.com: a regra de domínio para INTERNO não foi testada.
+O ramo "revisão humana" não foi exercitado, porque nenhuma resposta veio fora do formato.
+O Gmail Trigger entrega só o snippet (~200 caracteres), não o e-mail inteiro.
+Modelo em preview (gemini-3-flash-preview).
+O mascaramento por regex pode mascarar números de 8 dígitos que não sejam telefone.
+Só dados fictícios foram usados. Com dados reais, seria preciso ler a política de dados do provedor, controlar acesso e retenção do histórico do n8n e envolver jurídico/DPO.
+Próximos passos
+Regra de domínio para INTERNO, testada com remetentes de domínios diferentes.
+Buscar o corpo completo do e-mail (nó Get a message) em vez do snippet.
+Conjunto maior, com casos ambíguos e e-mails no estilo real, e várias rodadas.
+Medir precisão por categoria, não só a total.
+Como reproduzir a v2
+Importe v2/triagem-gmail-v2.json e v2/envio-24-emails.json no n8n.
+Conecte suas credenciais (Gmail, Google Sheets, Gemini).
+No envio, troque SEU_ENDERECO_DE_TESTE@gmail.com pelo e-mail de teste. Na triagem, escolha sua planilha.
+Publique a triagem antes de rodar o envio (o gatilho só vê e-mails que chegam depois de publicar) e despublique ao terminar.
+
 ## Como reproduzir
 1. Importe `triagem-emails.json` no n8n (Menu ⋯ → Import from file).
 2. Configure a credencial do Google Gemini.
