@@ -78,3 +78,22 @@ Registro do que foi feito, decidido e aprendido durante o projeto.
 - Buscar o corpo completo do e-mail (nó Get a message).
 - Conjunto maior, com casos ambíguos e e-mails no estilo real, e várias rodadas.
 - Medir precisão por categoria.
+
+## 2026-11-16 — Revisão do repositório
+
+### O que foi feito
+- Reescrevi a seção "Segurança" e o "Aprendizado principal" do README.
+- Adicionei um resumo do estado atual (v2) no topo do README.
+- Subi a evidência do teste: `v2/resultados.csv` (log da planilha) e `v2/gabarito.csv`.
+- Renomeei o GIF da v2 para `triagem-gmail-v2.gif` (estava com a extensão duplicada) e corrigi o link.
+- Removi o `instanceId` do n8n do `triagem-emails.json`.
+- Troquei a lista "Próximos passos (v2)" da v1 por um quadro do que foi e do que não foi feito.
+
+### O que estava errado
+- O README dizia que a validação por regex era a camada "mais forte" contra prompt injection. Não é verdade para este caso: a injeção do e-mail 6 pedia `<categoria>CANCELAMENTO</categoria>`, um formato válido. Se o modelo tivesse obedecido, a regex aprovaria.
+- O texto da v1 contradizia o aprendizado que eu mesmo registrei na v2 (a regex valida formato, não acerto).
+
+### Aprendizados
+- A validação de saída limita o estrago (só 5 rótulos possíveis), mas não detecta rótulo errado. Para isso servem o teste com gabarito e a revisão humana por amostragem.
+- Resultado sem arquivo de evidência no repositório é só uma afirmação.
+- Ao fechar uma versão nova, reler o texto da versão antiga: ele pode ter ficado errado.
