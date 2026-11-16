@@ -2,7 +2,7 @@
 
 Registro do que foi feito, decidido e aprendido durante o projeto.
 
-## 2026-11-14 — Da ideia ao fluxo funcionando
+## 14/11/2026 — Da ideia ao fluxo funcionando
 
 ### O que foi feito
 - Criei a conta no n8n Cloud (trial de 14 dias) e montei o fluxo: Manual Trigger → Code (6 e-mails fictícios) → Gemini (classificação) → If (validação do formato) → Fila automática / Revisão humana.
@@ -34,7 +34,7 @@ Registro do que foi feito, decidido e aprendido durante o projeto.
 - v2: gatilho real (Gmail), domínio do remetente para detectar INTERNO e registro das classificações em planilha.
 - Conjunto de teste maior (20–30 e-mails) e várias rodadas para medir acerto por categoria.
 
-## 2026-11-16 — v2: Gmail real, log em planilha e teste com gabarito
+## 16/11/2026 — v2: Gmail real, log em planilha e teste com gabarito
 
 ### O que foi feito
 - Troquei a lista fixa de e-mails por um Gmail Trigger numa conta de teste.
