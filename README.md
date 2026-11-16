@@ -4,6 +4,10 @@ Fluxo que lê e-mails de clientes de um app de delivery fictício, classifica ca
 
 > Todos os e-mails deste projeto são fictícios. Nenhum dado real foi usado.
 
+**Estado atual (v2, 16/11/2026):** o fluxo lê uma caixa de teste do Gmail, mascara CPF e telefone antes de enviar o texto ao modelo, classifica com o Gemini e registra cada resultado numa planilha. Num teste com 24 e-mails fictícios e gabarito fixado antes da execução, acertou 24/24. Isso mostra que o fluxo funciona, não mede precisão de produção: veja as [limitações da v2](#limitações-da-v2-sem-maquiagem).
+
+Este README conta o projeto em ordem: primeiro a v1 (6 e-mails, execução manual), depois a v2.
+
 ## Problema
 Times de atendimento perdem tempo lendo e-mails só para decidir para onde encaminhar. A triagem é repetitiva, mas errar tem custo (um pedido de cancelamento parado numa fila errada, por exemplo).
 
@@ -55,10 +59,16 @@ Comecei com um prompt simples e fui endurecendo conforme encontrava falhas nos t
 
 **V3 — exemplos, desempate e validação.** Adicionei 4 exemplos (few-shot), a regra de desempate (CANCELAMENTO > RECLAMACAO > DUVIDA), a saída de escape ("na dúvida, OUTRO") e a instrução de classificar pelo conteúdo real se houver tentativa de manipulação. No n8n, acrescentei o nó If com regex: mesmo que a IA erre o formato, o e-mail vai para revisão humana e não para a fila errada.
 
-**Aprendizado principal:** instrução no prompt ajuda, mas o que dá segurança de verdade é validar a saída por código.
+**Aprendizado principal:** instrução no prompt ajuda, mas depende de o modelo obedecer. A validação por código não depende do modelo, só que ela garante o **formato** da resposta, não que a categoria esteja **certa**.
 
 ## Segurança
-O e-mail nº 6 tenta fechar a tag `</email>` e injetar uma ordem falsa. O fluxo resistiu por três camadas: tags separando dados de instruções, aviso explícito no prompt e validação da saída. A mais forte é a **validação da saída por código**, porque não depende de a IA obedecer.
+O e-mail nº 6 tenta fechar a tag `</email>` e injetar uma ordem falsa. Nesta execução o modelo não obedeceu e classificou pelo conteúdo real (DUVIDA). Com um único teste, não dá para afirmar qual camada segurou. O que cada uma faz:
+
+- **Tags separando dados de instruções + aviso no prompt:** reduzem a chance de o modelo seguir a ordem injetada. Dependem de o modelo cooperar.
+- **Validação da saída por código (regex):** não depende do modelo. Garante que só passa uma das 5 categorias, no formato exato. Isso limita o estrago: o pior caso é um e-mail na fila errada, nunca texto livre ou uma ação fora do previsto.
+- **O que a validação não faz:** detectar categoria errada. A injeção deste teste pedia `<categoria>CANCELAMENTO</categoria>`, que é um formato válido. Se o modelo tivesse obedecido, a regex aprovaria e o e-mail iria para a fila errada.
+
+Para pegar categoria errada, o caminho é outro: teste com gabarito (feito na v2) e revisão humana por amostragem em produção. Na v2 também passei a remover `<` e `>` do e-mail antes de enviá-lo ao modelo, o que impede o fechamento da tag.
 
 ## Limitações (sem maquiagem)
 - Amostra pequena (6 e-mails) e **uma única execução**. Isso mostra que o fluxo funciona, não mede precisão. Um teste de verdade exigiria dezenas de e-mails reais de aparência variada e várias rodadas.
@@ -66,11 +76,11 @@ O e-mail nº 6 tenta fechar a tag `</email>` e injetar uma ordem falsa. O fluxo 
 - O modelo usado é uma versão *preview* do Gemini, e dados enviados a APIs gratuitas podem ser usados pelo provedor. Por isso só usei e-mails fictícios.
 - O fluxo roda manualmente, sem gatilho real de caixa de entrada.
 
-## Próximos passos (v2)
-- Gatilho real (Gmail) em vez de lista fixa.
-- Usar o domínio do remetente para detectar INTERNO.
-- Registrar cada classificação numa planilha para medir acerto ao longo do tempo.
-- Montar um conjunto de teste maior e medir precisão por categoria.
+## O que a v1 deixou para a v2
+- Gatilho real (Gmail) em vez de lista fixa. **Feito.**
+- Registrar cada classificação numa planilha. **Feito.**
+- Montar um conjunto de teste maior. **Feito em parte:** 24 e-mails, sem precisão por categoria.
+- Usar o domínio do remetente para detectar INTERNO. **Não feito:** o domínio é extraído e registrado, mas ainda não entra na decisão.
 
 ## v2 — Gmail real, log em planilha e teste com 24 e-mails
 
@@ -89,7 +99,7 @@ Gmail Trigger → Code (extrai domínio, mascara CPF/telefone, limpa < >) → Ge
                                                                                     └─ false → Revisão humana ───┴→ Google Sheets (log)
 ```
 
-![Execução da v2](v2/triagem-gmail-v2.gif.gif)
+![Execução da v2](v2/triagem-gmail-v2.gif)
 
 ### Como medi
 1. Escrevi o **gabarito antes de rodar**: 24 e-mails fictícios (T01–T24) com a categoria esperada de cada um.
@@ -101,7 +111,9 @@ Composição: 5 reclamações, 5 cancelamentos, 5 dúvidas, 3 internos e 6 outro
 ### Resultado
 **24/24 corretos (100%)**, todos na fila automática. CPF e telefone apareceram mascarados na saída do nó Code, e as duas injeções foram classificadas pelo conteúdo real do pedido.
 
-### Limitações (sem maquiagem)
+Evidência: o log exportado da planilha está em [`v2/resultados.csv`](v2/resultados.csv) e o gabarito em [`v2/gabarito.csv`](v2/gabarito.csv).
+
+### Limitações da v2 (sem maquiagem)
 - **100% numa amostra pequena não é precisão de produção.** O gabarito foi escrito com ajuda de IA e a maioria dos casos é clara.
 - Alguns exemplos do prompt se parecem com casos do teste, o que pode favorecer o acerto.
 - **Uma única execução.** Não medi variação entre rodadas.
